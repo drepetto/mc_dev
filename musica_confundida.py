@@ -23,33 +23,50 @@ class TiempoGigante:
     def tick(self,t):
         if(not self.running):
             return
+        
+        #  if no one is running we're done
+        anyone_running = False
+
         tick_flags = []
         beat_flags = []
         measure_flags = []
         finish_flags = []
 
         for i, bmm in enumerate(self.beat_map_maps):
-            reply = bmm.tick()
-            #print(reply)
+            if bmm.running:
+                anyone_running = True
+                reply = bmm.tick()
+                #print(reply)
 
-            if reply is None:
-                self.running = False
-                print("tg done ticking!")
-                self.finish_action(self, t)
-                return
-            
-            elif reply['is_beat']:
-                if not reply['is_rest']:
-                    beat_flags.append(i)
-    
-                if reply['is_measure']:
-                    measure_flags.append(i)
+                if reply['is_finished']:
+                    #self.running = False
+                    finish_flags.append(i)
+                    print("beat map", i, "done ticking!")
+                    #return
+                
+                elif reply['is_beat']:
+                    if not reply['is_rest']:
+                        beat_flags.append(i)
+        
+                    if reply['is_measure']:
+                        measure_flags.append(i)
+        
+        if len(finish_flags) > 0:
+            self.finish_action(self, finish_flags, t)
+
+        if anyone_running == False:
+            print("no one's running!")
+            self.running = False
+            return
         
         self.tick_action(self, tick_flags, t)
         if len(beat_flags) > 0:
             self.beat_action(self, beat_flags, t)        
         if len(measure_flags) > 0:
             self.measure_action(self, measure_flags, t)
+
+
+
 
     def set_tick_action(self, ta):
         self.tick_action = ta
@@ -109,6 +126,10 @@ class BeatMapMap:
         self.total_beats = 0
         self.total_measures = 0
         self.total_ticks = 0
+
+        # when we hit the end of our maps we set this to False
+        # to allow other maps to keep going
+        self.running = True
         
     
     def add_to_map_catalog(self, maps):
@@ -145,6 +166,7 @@ class BeatMapMap:
         is_beat = False
         is_rest = False
         is_measure = False
+        is_finished = False
         
         #problem with measures / curr_map_num...
         if self.curr_tick_num == self.curr_beat_length:
@@ -160,8 +182,9 @@ class BeatMapMap:
                 self.curr_map_num += 1
 
                 if self.curr_map_num == len(self.map_use_map):
-                    print("finished!")
-                    return None
+                    is_finished = True
+                    self.running = False
+                    return({"is_beat": is_beat, "is_rest": is_rest, "is_measure": is_measure, "is_finished": is_finished})
                 
                 self.curr_measure_length = len(self.map_catalog[self.map_use_map[self.curr_map_num]])
 
@@ -176,60 +199,5 @@ class BeatMapMap:
 
             #print("cbl:" , self.curr_beat_length)
 
-        return({"is_beat": is_beat, "is_rest": is_rest, "is_measure": is_measure})
+        return({"is_beat": is_beat, "is_rest": is_rest, "is_measure": is_measure, "is_finished": False})
     
-
-
-
-
-    '''
-    # mostly we should just call this?
-    def get_next_beat_length(self):
-
-        if self.curr_map_num < 0:
-            self.curr_map_num = 0
-
-        map = self.map_catalog[self.map_use_map[self.curr_map_num]]
-
-        self.curr_beat_num += 1
-
-        if self.curr_beat_num == len(map):
-            map = self.get_next_map()
-            self.curr_beat_num = 0
-
-            if map is None:
-                return None
-
-        return BeatLength(map[self.curr_beat_num], self.curr_beat_num)
-
-
-    def get_curr_map(self):
-        return self.map_catalog[self.map_use_map[self.curr_map_num]]
-    
-
-    def get_next_map(self):
-        self.curr_map_num += 1
-        self.curr_beat_num = -1
-        if (self.curr_map_num == len(self.map_use_map)):
-            self.curr_map_num = -1
-            return None
-        else:
-            return self.map_catalog[self.map_use_map[self.curr_map_num]]
-    
-    def print_lengths(self):
-
-        for i, map_num in enumerate(self.map_use_map):
-            curr_map = self.map_catalog[map_num]
-            print(curr_map)
-
-    '''
-
-class BeatLength:
-    def __init__(self, length, beat_num):
-
-        self.length = length
-        self.beat_num = beat_num
-
-
-#class CantoGigante:
-#    def __init__(self):

@@ -12,7 +12,6 @@ measure_count = 0
 # define your custom tick / beat / measure callbacks (if any)
 # call sig should be:
 # xyz_action(my_tg, flags, time)
-# finish_action(my_tg, time)
 
 # flags is a list of beat maps that have triggered
 
@@ -34,10 +33,10 @@ def measure_action(tg, flags, t):
 
     measure_count += 1
 
-def finish_action(tg, t):
+def finish_action(tg, flags, t):
     print("mc dance got finish message.")
     app.synth.note_on(app.patch_map[5], 4, t) 
-    #amy.send(osc=61,wave=amy.PCM,freq=0,patch=app.patch_map[5],vel=4, time=t)
+
 
 def quit(screen):
     screen.tg.reset()
@@ -73,7 +72,7 @@ def run(screen):
     bmm_clap = musica_confundida.BeatMapMap()
     clap_maps = [[-3,13]]
     bmm_clap.add_to_map_catalog(clap_maps)
-    bmm_clap.set_map_use_map([0] * 18)
+    bmm_clap.set_map_use_map([0] * 8)
 
     bmm_snare = musica_confundida.BeatMapMap()
     snare_maps = [[-3,3,3,2,3,2],[-3,3,6,1,1,1,1]]
