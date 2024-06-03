@@ -60,24 +60,23 @@ def run(screen):
     # the ticks don't have to add up to 16 or anything in particular. 
     # each beatmap in each beat map map can have its own duration
     bmm_a = musica_confundida.BeatMapMap()
-    a_maps = [[4,4,4,4],
-                 [4,4,8]]
-    bmm_a.add_to_map_catalog(bass_maps)
-    bmm_a.set_map_use_map([0,0,0,1] * 2)
+    a_maps = [[3,3,3,3]]
+    bmm_a.add_to_map_catalog(a_maps)
+    bmm_a.set_map_use_map([0,0,0])
 
     # negative numbers mean a rest, so -3, 13 means rest for 3 ticks
     # then a 13 tick beat filling in the rest of the 16 tick measure    
     bmm_b = musica_confundida.BeatMapMap()
-    b_maps = [[-3,13]]
-    bmm_b.add_to_map_catalog(clap_maps)
-    bmm_b.set_map_use_map([0] * 18)
+    b_maps = [[4,4,4]]
+    bmm_b.add_to_map_catalog(b_maps)
+    bmm_b.set_map_use_map([0,0,0])
 
-    bmm_c = musica_confundida.BeatMapMap()
-    c_maps = [[-3,3,3,2,3,2],[-3,3,6,1,1,1,1]]
-    bmm_c.add_to_map_catalog(snare_maps)
-    bmm_c.set_map_use_map([0,0,0,1] * 2)
+    #bmm_c = musica_confundida.BeatMapMap()
+    #c_maps = [[-3,3,3,2,3,2],[-3,3,6,1,1,1,1]]
+    #bmm_c.add_to_map_catalog(c_maps)
+    #bmm_c.set_map_use_map([0,0,0,1] * 2)
 
-    screen.tg = musica_confundida.TiempoGigante([bmm_a, bmm_b, bmm_c])
+    screen.tg = musica_confundida.TiempoGigante([bmm_a, bmm_b]) #, bmm_c])
     
 
     # set your tick / beat / measure actions (if any)
