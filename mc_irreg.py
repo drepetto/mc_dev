@@ -1,7 +1,7 @@
 
 
 from tulip import UIScreen, UIElement, pal_to_lv, lv_depad, lv, frame_callback, ticks_ms, seq_add_callback, seq_remove_callback, seq_ppq, ticks_ms
-import amy, tulip
+import amy, tulip, midi
 import musica_confundida
 import random
 
@@ -16,33 +16,29 @@ measure_count = 0
 # flags is a list of beat maps that have triggered
 
 def tick_action(tg, flags, t):
-
-    amy.send(osc=50,wave=amy.PCM,freq=0,patch=app.patch_map[0],vel=4, time=t)
+    app.synth.note_on(app.patch_map[0], 4, t)
 
 
 def beat_action(tg, flags, t):
-    print("beat!")
-    #print(flags)
     for i, f in enumerate(flags):
-        amy.send(osc=51+i,wave=amy.PCM,freq=0,patch=app.patch_map[f+1],vel=4, time=t)
+        app.synth.note_on(app.patch_map[f+1], 4, t) 
 
 def measure_action(tg, flags, t):
     global measure_count 
     # a little accent every four measures
     if measure_count % 4 == 0:
-        amy.send(osc=60,wave=amy.PCM,freq=0,patch=app.patch_map[4],vel=4, time=t)
+        app.synth.note_on(app.patch_map[4], 4, t) 
 
     measure_count += 1
 
 def finish_action(tg, t):
-    print("mc dance got finish message.")
-    amy.send(osc=61,wave=amy.PCM,freq=0,patch=app.patch_map[5],vel=4, time=t)
+    print("mc irreg got finish message.")
+    app.synth.note_on(app.patch_map[5], 4, t) 
 
 def quit(screen):
     screen.tg.reset()
 
 def run(screen):
-
     import gc
     gc.collect()
     mem_free = gc.mem_free()
@@ -52,9 +48,10 @@ def run(screen):
     app = screen
     screen.quit_callback = quit
 
-    amy.reset()
 
     screen.patch_map = [6,1,9,2,13,14]
+    screen.synth = midi.DrumSynth()
+
 
     # the beat map is in 16th notes. so 4 means 4 x 16ths, aka a quarter note.
     # the ticks don't have to add up to 16 or anything in particular. 
