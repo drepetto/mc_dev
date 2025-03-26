@@ -1,16 +1,16 @@
-import tulip
+import tulip, sequencer
 
 class TiempoGigante:
     def __init__(self, beat_map_maps):
-
-        #already a list of lists
+        print("0")
+        #already a list of lists    
         if isinstance(beat_map_maps[0], BeatMapMap):
             self.beat_map_maps = beat_map_maps
         else:
             self.beat_map_maps.append(beat_map_maps)
 
         self.clear_all_stats()
-        self.seq_slot = -1
+        self.seq = None
         self.running = False
         # empty but valid placeholder callbacks
         self.tick_action = lambda *args, **kwargs: None
@@ -23,50 +23,32 @@ class TiempoGigante:
     def tick(self,t):
         if(not self.running):
             return
-        
-        #  if no one is running we're done
-        anyone_running = False
-
         tick_flags = []
         beat_flags = []
         measure_flags = []
         finish_flags = []
-
         for i, bmm in enumerate(self.beat_map_maps):
-            if bmm.running:
-                anyone_running = True
-                reply = bmm.tick()
-                #print(reply)
+            reply = bmm.tick()
+            #print(reply)
 
-                if reply['is_finished']:
-                    #self.running = False
-                    finish_flags.append(i)
-                    print("beat map", i, "done ticking!")
-                    #return
-                
-                elif reply['is_beat']:
-                    if not reply['is_rest']:
-                        beat_flags.append(i)
-        
-                    if reply['is_measure']:
-                        measure_flags.append(i)
-        
-        if len(finish_flags) > 0:
-            self.finish_action(self, finish_flags, t)
-
-        if anyone_running == False:
-            print("no one's running!")
-            self.running = False
-            return
+            if reply is None:
+                self.running = False
+                print("tg done ticking!")
+                self.finish_action(self, t)
+                return
+            
+            elif reply['is_beat']:
+                if not reply['is_rest']:
+                    beat_flags.append(i)
+    
+                if reply['is_measure']:
+                    measure_flags.append(i)
         
         self.tick_action(self, tick_flags, t)
         if len(beat_flags) > 0:
             self.beat_action(self, beat_flags, t)        
         if len(measure_flags) > 0:
             self.measure_action(self, measure_flags, t)
-
-
-
 
     def set_tick_action(self, ta):
         self.tick_action = ta
@@ -99,12 +81,15 @@ class TiempoGigante:
         #print("doing reset in tiempo gigante")
         self.clear_all_stats()
         self.running=False
-        tulip.seq_remove_callback(self.seq_slot)
+        if(self.seq is not None):
+            self.seq.clear()
+        self.seq = None
 
     def run(self):
         # we us a divider of 12, giving us 16th notes (48/12 = 4 ticks per quarter note)
         # our BeatMapMap takes 16th note values
-        self.seq_slot = tulip.seq_add_callback(self.tick, 12)
+        self.seq = sequencer.Sequence(1,16)
+        self.seq.add(0,self.tick)
         self.running=True
 
 
@@ -126,10 +111,6 @@ class BeatMapMap:
         self.total_beats = 0
         self.total_measures = 0
         self.total_ticks = 0
-
-        # when we hit the end of our maps we set this to False
-        # to allow other maps to keep going
-        self.running = True
         
     
     def add_to_map_catalog(self, maps):
@@ -166,7 +147,6 @@ class BeatMapMap:
         is_beat = False
         is_rest = False
         is_measure = False
-        is_finished = False
         
         #problem with measures / curr_map_num...
         if self.curr_tick_num == self.curr_beat_length:
@@ -182,9 +162,8 @@ class BeatMapMap:
                 self.curr_map_num += 1
 
                 if self.curr_map_num == len(self.map_use_map):
-                    is_finished = True
-                    self.running = False
-                    return({"is_beat": is_beat, "is_rest": is_rest, "is_measure": is_measure, "is_finished": is_finished})
+                    print("finished!")
+                    return None
                 
                 self.curr_measure_length = len(self.map_catalog[self.map_use_map[self.curr_map_num]])
 
@@ -199,5 +178,60 @@ class BeatMapMap:
 
             #print("cbl:" , self.curr_beat_length)
 
-        return({"is_beat": is_beat, "is_rest": is_rest, "is_measure": is_measure, "is_finished": False})
+        return({"is_beat": is_beat, "is_rest": is_rest, "is_measure": is_measure})
     
+
+
+
+
+    '''
+    # mostly we should just call this?
+    def get_next_beat_length(self):
+
+        if self.curr_map_num < 0:
+            self.curr_map_num = 0
+
+        map = self.map_catalog[self.map_use_map[self.curr_map_num]]
+
+        self.curr_beat_num += 1
+
+        if self.curr_beat_num == len(map):
+            map = self.get_next_map()
+            self.curr_beat_num = 0
+
+            if map is None:
+                return None
+
+        return BeatLength(map[self.curr_beat_num], self.curr_beat_num)
+
+
+    def get_curr_map(self):
+        return self.map_catalog[self.map_use_map[self.curr_map_num]]
+    
+
+    def get_next_map(self):
+        self.curr_map_num += 1
+        self.curr_beat_num = -1
+        if (self.curr_map_num == len(self.map_use_map)):
+            self.curr_map_num = -1
+            return None
+        else:
+            return self.map_catalog[self.map_use_map[self.curr_map_num]]
+    
+    def print_lengths(self):
+
+        for i, map_num in enumerate(self.map_use_map):
+            curr_map = self.map_catalog[map_num]
+            print(curr_map)
+
+    '''
+
+class BeatLength:
+    def __init__(self, length, beat_num):
+
+        self.length = length
+        self.beat_num = beat_num
+
+
+#class CantoGigante:
+#    def __init__(self):

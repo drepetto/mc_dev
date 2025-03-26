@@ -1,7 +1,7 @@
 # Tulip CC demo for musical structure ideas with
 # musica confundida, tiempo gigante, beat maps
 
-from tulip import UIScreen, UIElement, pal_to_lv, lv_depad, lv, frame_callback, ticks_ms, seq_add_callback, seq_remove_callback, seq_ppq, ticks_ms
+from tulip import UIScreen, UIElement, pal_to_lv, lv_depad, lv, frame_callback, ticks_ms
 import amy, tulip, midi
 import musica_confundida
 import random
@@ -12,6 +12,7 @@ measure_count = 0
 # define your custom tick / beat / measure callbacks (if any)
 # call sig should be:
 # xyz_action(my_tg, flags, time)
+# finish_action(my_tg, time)
 
 # flags is a list of beat maps that have triggered
 
@@ -33,10 +34,10 @@ def measure_action(tg, flags, t):
 
     measure_count += 1
 
-def finish_action(tg, flags, t):
+def finish_action(tg, t):
     print("mc dance got finish message.")
     app.synth.note_on(app.patch_map[5], 4, t) 
-
+    #amy.send(osc=61,wave=amy.PCM,freq=0,patch=app.patch_map[5],vel=4, time=t)
 
 def quit(screen):
     screen.tg.reset()
@@ -52,8 +53,8 @@ def run(screen):
     app = screen
     screen.quit_callback = quit
 
-
-    screen.patch_map = [6,1,9,2,13,14]
+    #35, 36, 37, 38, 39, 40, 41, 42, 43, 46, 49, 56, 64, 70, 75, 76]
+    screen.patch_map = [42,35,37,38,56,46]
     screen.synth = midi.DrumSynth()
 
     # make some beat map maps and pass them to a TG
@@ -72,15 +73,13 @@ def run(screen):
     bmm_clap = musica_confundida.BeatMapMap()
     clap_maps = [[-3,13]]
     bmm_clap.add_to_map_catalog(clap_maps)
-    bmm_clap.set_map_use_map([0] * 8)
+    bmm_clap.set_map_use_map([0] * 18)
 
     bmm_snare = musica_confundida.BeatMapMap()
     snare_maps = [[-3,3,3,2,3,2],[-3,3,6,1,1,1,1]]
     bmm_snare.add_to_map_catalog(snare_maps)
     bmm_snare.set_map_use_map([0,0,0,1] * 2)
-
     screen.tg = musica_confundida.TiempoGigante([bmm_bass, bmm_clap, bmm_snare])
-    
 
     # set your tick / beat / measure actions (if any)
     screen.tg.set_tick_action(tick_action)
@@ -96,5 +95,9 @@ def run(screen):
     print("after run() memory:", gc.mem_free(), "used: ", str(mem_free - gc.mem_free()))
     
     
+
+
+
+
 
 
